@@ -341,6 +341,10 @@ export default function StudentsPage() {
           )}
         </AnimatePresence>
 
+        <AdmitStudentModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
       </div>
     </DashboardLayout>
   );

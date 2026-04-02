@@ -17,7 +17,9 @@ import {
   MoreVertical,
   Layers,
   ShieldCheck,
-  Zap
+  Zap,
+  Target,
+  ChevronRight
 } from "lucide-react";
 import { 
   Chart as ChartJS, 
@@ -57,7 +59,10 @@ export default function AdminDashboard() {
   const [teacherCount, setTeacherCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
+    setIsMounted(true);
     const unsubStudents = onSnapshot(collection(db, "students"), (snapshot) => {
       setStudentCount(snapshot.size);
     });

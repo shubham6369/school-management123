@@ -1,168 +1,277 @@
 "use client";
 
-import { useState } from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import { 
-  Megaphone, Plus, Search, Filter, 
-  MoreVertical, Edit3, Trash2, Globe,
-  Lock, Calendar, Image as ImageIcon, CheckCircle2,
-  AlertCircle, ChevronRight, Share2, Tag
+  Bell, 
+  Plus, 
+  Search, 
+  Filter, 
+  Calendar, 
+  User, 
+  Tag, 
+  MoreVertical, 
+  MessageSquare, 
+  Heart,
+  Share2,
+  Bookmark,
+  Zap,
+  Globe,
+  Lock,
+  Eye,
+  Megaphone,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-interface NewsItem {
-  id: string;
-  title: string;
-  excerpt: string;
-  category: "Academic" | "Event" | "Holiday" | "Other";
-  date: string;
-  status: "Published" | "Draft";
-  author: string;
-  visibility: "Public" | "Internal";
-}
+export default function AnnouncementsPage() {
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState({ title: "", content: "", category: "General", target: "All" });
 
-export default function AdminNewsPage() {
-  const [showForm, setShowForm] = useState(false);
-  const [news, setNews] = useState<NewsItem[]>([
-    { id: "1", title: "Annual Science Fair 2024", excerpt: "Join us for a spectacular display of innovation and creativity next month.", category: "Event", date: "2024-04-15", status: "Published", author: "Principal", visibility: "Public" },
-    { id: "2", title: "Eid Break Announcement", excerpt: "School will remain closed from April 10th to April 14th for Eid-ul-Fitr holidays.", category: "Holiday", date: "2024-04-05", status: "Published", author: "Administration", visibility: "Internal" },
-    { id: "3", title: "New Lab Equipment Arrival", excerpt: "We've upgraded our physics lab with the latest experimental apparatus.", category: "Academic", date: "2024-04-20", status: "Draft", author: "HOD Physics", visibility: "Public" },
-  ]);
+  useEffect(() => {
+    const q = query(collection(db, "announcements"), orderBy("timestamp", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setAnnouncements(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const toggleStatus = (id: string) => {
-    setNews(prev => prev.map(item => 
-      item.id === id ? { ...item, status: item.status === "Published" ? "Draft" : "Published" } : item
-    ));
-  };
-
-  const deleteItem = (id: string) => {
-    if (confirm("Are you sure you want to delete this announcement?")) {
-      setNews(prev => prev.filter(item => item.id !== id));
+  const handlePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await addDoc(collection(db, "announcements"), {
+        ...newAnnouncement,
+        timestamp: serverTimestamp(),
+        author: "Administrator",
+        likes: 0,
+        comments: 0
+      });
+      setIsModalOpen(false);
+      setNewAnnouncement({ title: "", content: "", category: "General", target: "All" });
+    } catch (error) {
+      console.error("Error posting announcement:", error);
     }
   };
 
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-4">
-             <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 flex items-center justify-center text-indigo-400">
-                <Megaphone className="w-6 h-6 -rotate-12" />
-             </div>
-             Announcements
-          </h1>
-          <p className="text-slate-400 mt-2 font-bold uppercase tracking-widest text-xs">Keep the community informed with timely updates.</p>
+    <DashboardLayout role="admin">
+      <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        
+        {/* Cinematic Header */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 relative">
+           <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] -z-10 animate-pulse-slow" />
+           
+           <div className="space-y-4">
+              <div className="flex items-center gap-2 group">
+                 <div className="p-2 bg-indigo-500/10 rounded-lg superior-border group-hover:bg-indigo-500/20 transition-all">
+                    <Megaphone className="w-4 h-4 text-indigo-400" />
+                 </div>
+                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">Propaganda Node</span>
+              </div>
+              <h1 className="text-6xl font-black text-white tracking-tighter leading-none">
+                 Global <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-indigo-600 drop-shadow-[0_0_30px_rgba(129,140,248,0.3)]">Broadcasts</span>
+              </h1>
+              <p className="text-slate-400 text-xl font-medium max-w-2xl leading-relaxed">
+                 Disseminate critical intelligence, upcoming events, and official mandates across the institutional network.
+              </p>
+           </div>
+
+           <button 
+              onClick={() => setIsModalOpen(true)}
+              className="group relative px-10 py-5 bg-indigo-600 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-[0.3em] overflow-hidden shadow-[0_20px_50px_rgba(79,70,229,0.3)] hover:scale-105 active:scale-95 transition-all"
+           >
+              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+              <div className="flex items-center gap-3 relative z-10">
+                 <Plus className="w-5 h-5 group-hover:rotate-180 transition-transform duration-700" />
+                 Initialize Broadcast
+              </div>
+           </button>
         </div>
-        <button 
-          onClick={() => setShowForm(true)}
-          className="px-8 py-3 bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-600/20 flex items-center gap-3 active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          Quick Post
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <AnimatePresence mode="popLayout">
-           {news.map((item, idx) => (
-             <motion.div
-               key={item.id}
-               layout
-               initial={{ opacity: 0, scale: 0.9 }}
-               animate={{ opacity: 1, scale: 1 }}
-               exit={{ opacity: 0, scale: 0.8, x: 20 }}
-               transition={{ duration: 0.3, delay: idx * 0.05 }}
+        {/* Intelligence Filters */}
+        <div className="flex flex-wrap items-center gap-4 p-2 bg-white/[0.02] border border-white/5 rounded-[2.5rem] superior-border backdrop-blur-md">
+           {['All Transmissions', 'Academic', 'Events', 'Administrative', 'Emergency'].map((filter, i) => (
+             <button 
+               key={filter}
+               className={`px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${i === 0 ? 'bg-indigo-500/10 text-white border border-indigo-500/30' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}
              >
-                <Card className="bg-slate-900/40 backdrop-blur-xl border-white/5 p-8 rounded-[2rem] group hover:border-indigo-500/30 transition-all flex flex-col h-full relative overflow-hidden">
-                   {/* Background Glow */}
-                   <div className="absolute -right-10 -top-10 w-32 h-32 bg-indigo-600/5 rounded-full blur-3xl group-hover:bg-indigo-600/10 transition-all" />
-                   
-                   <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center gap-2">
-                        <Tag className="w-4 h-4 text-indigo-400" />
-                        <span className="text-indigo-400 font-black text-[10px] uppercase tracking-widest">{item.category}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                         {item.visibility === "Public" ? (
-                           <Globe className="w-4 h-4 text-slate-500" />
-                         ) : (
-                           <Lock className="w-4 h-4 text-slate-500" />
-                         )}
-                         <div className="relative group/actions">
-                            <button className="text-slate-600 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5">
-                               <MoreVertical className="w-5 h-5" />
-                            </button>
-                            <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50">
-                               <button onClick={() => toggleStatus(item.id)} className="w-full px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-indigo-600 transition-all border-b border-white/5">{item.status === 'Published' ? 'Unpublish' : 'Publish'}</button>
-                               <button className="w-full px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2 focus:outline-none"><Edit3 className="w-3 h-3" /> Edit Post</button>
-                               <button onClick={() => deleteItem(item.id)} className="w-full px-5 py-3 text-left text-xs font-black uppercase tracking-widest text-rose-500 hover:text-white hover:bg-rose-600 transition-all flex items-center gap-2 focus:outline-none"><Trash2 className="w-3 h-3" /> Remove News</button>
-                            </div>
-                         </div>
-                      </div>
-                   </div>
-
-                   <h3 className="text-xl font-black text-white tracking-tight uppercase mb-3 line-clamp-2 leading-tight group-hover:text-indigo-400 transition-colors">
-                     {item.title}
-                   </h3>
-                   <p className="text-slate-400 font-bold text-sm mb-10 line-clamp-3 leading-relaxed flex-1">
-                     {item.excerpt}
-                   </p>
-
-                   <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                         <div className="w-8 h-8 rounded-full bg-slate-800 border border-white/5 flex items-center justify-center font-black text-[10px] text-slate-500 uppercase tracking-tighter">
-                            {item.author.charAt(0)}
-                         </div>
-                         <div>
-                            <p className="text-white font-black text-[10px] uppercase tracking-tight">{item.author}</p>
-                            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">{item.date}</p>
-                         </div>
-                      </div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${
-                        item.status === 'Published' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-slate-800/50 border-white/10 text-slate-500'
-                      }`}>
-                        {item.status}
-                      </span>
-                   </div>
-                </Card>
-             </motion.div>
+               {filter}
+             </button>
            ))}
+           <div className="ml-auto flex items-center gap-2 pr-4">
+              <Search className="w-4 h-4 text-slate-600" />
+              <input 
+                placeholder="Search archive..." 
+                className="bg-transparent border-none text-xs font-bold text-slate-400 focus:ring-0 w-40"
+              />
+           </div>
+        </div>
+
+        {/* Announcements Feed */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+           {announcements.length === 0 ? (
+             [1,2,3,4].map(i => (
+               <div key={i} className="neo-glass bg-slate-900/40 rounded-[3rem] p-10 superior-border animate-pulse h-80" />
+             ))
+           ) : (
+             announcements.map((post, i) => (
+               <motion.div
+                 key={post.id}
+                 initial={{ opacity: 0, scale: 0.95 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 transition={{ delay: i * 0.1 }}
+                 className="group relative neo-glass bg-slate-950/40 rounded-[3.5rem] superior-border p-10 hover:border-indigo-500/40 transition-all duration-700 overflow-hidden shadow-2xl"
+               >
+                 {/* Decorative Pulse */}
+                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-colors" />
+                 
+                 <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                       <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-slate-900 to-indigo-900/50 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-700 shadow-inner">
+                          <Megaphone className="w-6 h-6 text-indigo-400 text-glow" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-1">{post.category || 'GENERAL'}</p>
+                          <div className="flex items-center gap-2">
+                             <h3 className="text-2xl font-black text-white tracking-tighter group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-400 transition-all duration-700">{post.title}</h3>
+                             {i < 1 && <span className="bg-rose-500/10 text-rose-400 text-[8px] font-bold px-2 py-0.5 rounded-full border border-rose-500/20 animate-pulse uppercase tracking-widest">Recent</span>}
+                          </div>
+                       </div>
+                    </div>
+                    <button className="p-4 bg-white/5 border border-white/5 rounded-2xl text-slate-500 hover:text-white transition-all"><MoreVertical className="w-5 h-5"/></button>
+                 </div>
+
+                 <p className="text-slate-400 text-lg font-medium leading-relaxed mb-10 line-clamp-3 group-hover:text-slate-300 transition-colors">
+                   {post.content}
+                 </p>
+
+                 <div className="flex flex-wrap items-center gap-6 pt-10 border-t border-white/5">
+                    <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center superior-border">
+                          <User className="w-4 h-4 text-slate-500" />
+                       </div>
+                       <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{post.author}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-[11px] font-black text-slate-500 uppercase tracking-widest bg-white/[0.04] px-4 py-2 rounded-full border border-white/5">
+                       <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+                       {post.timestamp?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-auto">
+                       <button className="flex items-center gap-1.5 px-4 py-2 hover:bg-white/5 rounded-full transition-all group/btn text-slate-500 hover:text-rose-400">
+                          <Heart className="w-4 h-4 group-hover/btn:fill-rose-400 transition-all" />
+                          <span className="text-[11px] font-black tracking-widest">{post.likes || 0}</span>
+                       </button>
+                       <button className="flex items-center gap-1.5 px-4 py-2 hover:bg-white/5 rounded-full transition-all group/btn text-slate-500 hover:text-indigo-400">
+                          <MessageSquare className="w-4 h-4" />
+                          <span className="text-[11px] font-black tracking-widest">{post.comments || 0}</span>
+                       </button>
+                       <button className="p-2.5 hover:bg-white/5 rounded-full transition-all text-slate-500 hover:text-white">
+                          <Share2 className="w-4 h-4" />
+                       </button>
+                    </div>
+                 </div>
+               </motion.div>
+             ))
+           )}
+        </div>
+
+        {/* Modal for New Announcement */}
+        <AnimatePresence>
+          {isModalOpen && (
+            <>
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setIsModalOpen(false)}
+                className="fixed inset-0 bg-black/80 backdrop-blur-2xl z-[100]"
+              />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 40 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-2xl bg-[#020617] border border-white/10 rounded-[3rem] p-12 z-[101] shadow-2xl overflow-hidden"
+              >
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
+                
+                <h2 className="text-4xl font-black text-white tracking-tighter mb-8">Initialize <span className="text-indigo-500">Transmission</span></h2>
+                
+                <form onSubmit={handlePost} className="space-y-8">
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Transmission Title</label>
+                      <input 
+                        required
+                        value={newAnnouncement.title}
+                        onChange={e => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
+                        className="w-full bg-white/[0.03] border-none rounded-2xl py-5 px-8 text-white font-bold tracking-tight focus:ring-4 focus:ring-indigo-500/20 transition-all text-lg"
+                        placeholder="Urgent: Academic Policy Update..."
+                      />
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Category Vector</label>
+                         <select 
+                           value={newAnnouncement.category}
+                           onChange={e => setNewAnnouncement({...newAnnouncement, category: e.target.value})}
+                           className="w-full bg-white/[0.03] border-none rounded-2xl py-4 px-6 text-white font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-500/20"
+                         >
+                            <option className="bg-slate-900">General</option>
+                            <option className="bg-slate-900">Academic</option>
+                            <option className="bg-slate-900">Events</option>
+                            <option className="bg-slate-900">Emergency</option>
+                         </select>
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Target Node</label>
+                         <select 
+                            value={newAnnouncement.target}
+                            onChange={e => setNewAnnouncement({...newAnnouncement, target: e.target.value})}
+                            className="w-full bg-white/[0.03] border-none rounded-2xl py-4 px-6 text-white font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-500/20"
+                         >
+                            <option className="bg-slate-900">All Entities</option>
+                            <option className="bg-slate-900">Teachers Only</option>
+                            <option className="bg-slate-900">Students Only</option>
+                         </select>
+                      </div>
+                   </div>
+
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Broadcast Intelligence</label>
+                      <textarea 
+                        required
+                        value={newAnnouncement.content}
+                        onChange={e => setNewAnnouncement({...newAnnouncement, content: e.target.value})}
+                        rows={5}
+                        className="w-full bg-white/[0.03] border-none rounded-[2rem] py-6 px-8 text-white font-medium tracking-normal focus:ring-4 focus:ring-indigo-500/20 transition-all resize-none leading-relaxed"
+                        placeholder="Detailed message payload for institutional synchronization..."
+                      />
+                   </div>
+
+                   <div className="flex items-center gap-4 pt-4">
+                      <button 
+                        type="button"
+                        onClick={() => setIsModalOpen(false)}
+                        className="flex-1 py-5 bg-white/5 border border-white/10 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                      >
+                         Abort Signal
+                      </button>
+                      <button 
+                         type="submit"
+                         className="flex-[2] py-5 bg-indigo-600 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] text-white shadow-2xl shadow-indigo-500/30 hover:bg-indigo-700 transition-all active:scale-95"
+                      >
+                         Execute Global Broadcast
+                      </button>
+                   </div>
+                </form>
+              </motion.div>
+            </>
+          )}
         </AnimatePresence>
 
-        {/* Placeholder for adding more */}
-        <Card 
-          onClick={() => setShowForm(true)}
-          className="bg-dashed border-2 border-dashed border-white/5 p-8 rounded-[2rem] flex flex-col items-center justify-center gap-6 group hover:border-indigo-500/30 transition-all cursor-pointer min-h-[350px]"
-        >
-           <div className="w-16 h-16 rounded-full bg-indigo-500/5 flex items-center justify-center border-2 border-dashed border-indigo-500/20 group-hover:bg-indigo-500/10 transition-all">
-              <Plus className="w-8 h-8 text-indigo-500 group-hover:scale-110 transition-transform" />
-           </div>
-           <div className="text-center">
-              <p className="text-white font-black uppercase tracking-widest text-xs">Post New Update</p>
-              <p className="text-slate-600 font-bold text-[10px] uppercase tracking-widest mt-1">Start writing your next big annoucement.</p>
-           </div>
-        </Card>
       </div>
-
-      {/* Quick Stats Banner */}
-      <div className="flex items-center gap-4 p-8 bg-indigo-600/5 border border-indigo-500/10 rounded-3xl">
-         <div className="w-14 h-14 rounded-2xl bg-indigo-600/10 flex items-center justify-center shadow-inner">
-            <Share2 className="w-7 h-7 text-indigo-400" />
-         </div>
-         <div className="flex-1">
-            <h4 className="text-white font-black uppercase tracking-tight text-lg mb-1">Impact Summary</h4>
-            <p className="text-slate-400 font-bold text-sm tracking-wide">Your announcements have reached over <span className="text-indigo-400">1,200 unique visitors</span> this week. Keep up the momentum!</p>
-         </div>
-         <button className="hidden md:block px-6 py-2 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-indigo-500 transition-all">View Analytics</button>
-      </div>
-
-      {loading && (
-        <div className="fixed inset-0 bg-slate-950/20 backdrop-blur-sm z-50 flex items-center justify-center">
-           <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-        </div>
-      )}
-    </div>
+    </DashboardLayout>
   );
 }
-
-const loading = false;

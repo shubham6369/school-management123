@@ -18,6 +18,10 @@ export default function AdmitStudentModal({ isOpen, onClose }: AdmitStudentModal
     class: "Grade 10",
     gender: "Male",
     status: "Active",
+    parent: "",
+    email: "",
+    phone: "",
+    address: "",
     image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80", // Default placeholder
   });
   const [loading, setLoading] = useState(false);
@@ -45,6 +49,10 @@ export default function AdmitStudentModal({ isOpen, onClose }: AdmitStudentModal
           class: "Grade 10",
           gender: "Male",
           status: "Active",
+          parent: "",
+          email: "",
+          phone: "",
+          address: "",
           image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80",
         });
       }, 2000);
