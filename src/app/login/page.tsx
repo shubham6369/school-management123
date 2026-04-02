@@ -189,10 +189,7 @@ export default function LoginPage() {
             </p>
           </div>
         </motion.div>
-      </motion.div>
+      </div>
     </div>
-  );
-}
-  </div>
   );
 }
